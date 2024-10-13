@@ -1,0 +1,9 @@
+#image-container{
+    display: flex;
+    gap: 5px;
+}
+
+.ett_svar_div{
+display: flex;
+flex-direction: column;
+}

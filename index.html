@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script defer  src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+</head>
+<body>
+<div><h1>Teachable Machine Image Model</h1></div>
+<h2>Ange URL till model</h2>
+<input type="text" name="model-input" id="model-input"  size="50">
+
+<h2>Välj Bilder</h2>
+<!-- File input element to select images -->
+<input type="file" id="file-input" multiple accept="image/*">
+
+<!-- Container where images will be displayed --> 
+<div id="image-container"></div>
+
+    <button type="button" onclick="init()">Start</button>
+    <div id="label-container"></div>
+    <script type="text/javascript">
+
+        const fileInput = document.getElementById('file-input');
+        const modelInput = document.getElementById('model-input');
+
+        const imageContainer = document.getElementById('image-container');
+                // More API functions here:
+        // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+        // the link to your model provided by Teachable Machine export panel
+        let URL = "https://teachablemachine.withgoogle.com/models/vYF8W2-yp/";
+
+        let model, model_url, labelContainer, maxPredictions;
+
+        let testData = [];
+        
+        modelInput.addEventListener('change', function(event) {
+            model_url = modelInput.value; 
+
+        }
+    );
+        
+
+        fileInput.addEventListener('change', function(event) {
+            // Clear any previously displayed images
+            imageContainer.innerHTML = '';
+
+            // Get the list of selected files
+            const files = event.target.files;
+
+            // Iterate over the selected files
+            Array.from(files).forEach(file => {
+                // Ensure the file is an image
+                if (file.type.startsWith('image/')) {
+                    // Create a FileReader to read the image file
+                    const reader = new FileReader();
+
+                    // When the file is read, display the image
+                    reader.onload = function(e) {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = e.target.result; // Set the image source to the file's content
+                        testData.push(imgElement);
+                        let div = document.createElement("div");
+
+                        div.classList.add("ett_svar_div");
+                        div.appendChild(imgElement)
+                        imageContainer.appendChild(div); // Append the image to the container
+                    };
+
+                    // Read the image file as a Data URL
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+
+        // Load the image model 
+        async function init() 
+        {
+            const modelURL = model_url + "model.json";
+            const metadataURL = model_url + "metadata.json";
+
+            // load the model and metadata
+            // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+            // or files from your local hard drive
+            // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+/* 
+           labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) { // and class labels
+                let div = document.createElement("div")
+
+                labelContainer.appendChild(div);
+            }
+ */            predict();
+        }
+
+
+        // run the images  through the image model
+        async function predict() {
+            // predict can take in an image, video or canvas html element
+            let j=0;
+            let alla_svar_divs = document.getElementsByClassName("ett_svar_div");
+            for( j=0; j < testData.length; j++)
+            {
+
+                const prediction = await model.predict(testData[j]);
+                console.log("Varv "+j+ ", info: "+prediction);
+                let h2 = document.createElement("h2");
+                h2.appendChild(document.createTextNode( "Bild "+(j+1 )));
+                alla_svar_divs[j].appendChild(h2); 
+
+                for (let i = 0; i < maxPredictions; i++) {
+                    const classPrediction =
+                        prediction[i].className + ":  :" + prediction[i].probability.toFixed(2);
+                        let p = document.createElement("p");
+                        p.appendChild(document.createTextNode( classPrediction));
+                        alla_svar_divs[j].appendChild(p); 
+                }
+
+            } 
+        }
+
+
+</script>
+
+</body>
+</html>
